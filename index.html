@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Styling untuk container peta utama */
+    .map-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 950px;
+      margin: 0 auto;
+    }
+    .map-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 8px;
+    }
+
+    /* Styling kartu melayang agar posisinya terkunci di sekitar peta */
+    .floating-card {
+      position: absolute;
+      width: 230px;
+      font-size: 11px;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 p-4">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- HEADER & FILTER LENGKAP -->
+    <header class="flex flex-col md:flex-row justify-between items-center bg-slate-800 border border-slate-700 p-4 rounded-lg shadow-lg mb-4 gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2 border-r border-slate-600 pr-4">
+          <span class="font-black text-xl tracking-wider text-blue-400">PLN</span>
+        </div>
+        <div>
+          <h1 class="font-bold text-base text-white">PETA SUSUT UP3 PAREPARE</h1>
+          <p class="text-xs text-slate-400">Monitoring Susut Distribusi</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3 text-sm items-center">
+        <!-- FILTER KUM (BULANAN / KUMULATIF) -->
+        <div>
+          <label class="text-xs font-semibold mr-1 text-slate-300">TIPE:</label>
+          <select id="filterKum" class="border border-slate-600 p-1 rounded bg-slate-900 text-white text-xs font-medium focus:outline-none focus:border-blue-500" onchange="loadData()">
+            <option value="BULANAN">BULANAN</option>
+            <option value="KUMULATIF">KUMULATIF</option>
+          </select>
+        </div>
+
+        <!-- FILTER BULAN -->
+        <div>
+          <label class="text-xs font-semibold mr-1 text-slate-300">BULAN:</label>
+          <select id="filterBulan" class="border border-slate-600 p-1 rounded bg-slate-900 text-white text-xs font-medium focus:outline-none focus:border-blue-500" onchange="loadData()">
+            <option value="01 JANUARI">01 JANUARI</option>
+            <option value="02 FEBRUARI">02 FEBRUARI</option>
+            <option value="03 MARET">03 MARET</option>
+            <option value="04 APRIL">04 APRIL</option>
+            <option value="05 MEI">05 MEI</option>
+            <option value="06 JUNI">06 JUNI</option>
+            <option value="07 JULI">07 JULI</option>
+            <option value="08 AGUSTUS">08 AGUSTUS</option>
+            <option value="09 SEPTEMBER">09 SEPTEMBER</option>
+            <option value="10 OKTOBER">10 OKTOBER</option>
+            <option value="11 NOVEMBER">11 NOVEMBER</option>
+            <option value="12 DESEMBER">12 DESEMBER</option>
+          </select>
+        </div>
+
+        <!-- FILTER TAHUN -->
+        <div>
+          <label class="text-xs font-semibold mr-1 text-slate-300">TAHUN:</label>
+          <select id="filterTahun" class="border border-slate-600 p-1 rounded bg-slate-900 text-white text-xs font-medium focus:outline-none focus:border-blue-500" onchange="loadData()">
+            <option value="2025">2025</option>
+            <option value="2026" selected>2026</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- KANVAS PETA & KARTU MELAYANG -->
+    <div class="bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-6 relative">
+      <div class="map-wrapper">
+        
+        <!-- GAMBAR PETA UTAMA -->
+        <img src="https://lh3.googleusercontent.com/d/1YVLUXNZQxOTjLpkGCNrCaDgGaf9kl_v7" alt="Peta UP3 Parepare">
+
+        <!-- POSISI KARTU STATISTIK -->
+        <div id="card-RAPPANG" class="floating-card" style="top: 10%; left: 5%;"></div>
+        <div id="card-MATTIROTASI" class="floating-card" style="top: 40%; left: 1%;"></div>
+        <div id="card-BARRU" class="floating-card" style="top: 70%; left: 3%;"></div>
+        
+        <div id="card-TANRU TEDONG" class="floating-card" style="top: 1%; right: 30%;"></div>
+        <div id="card-PANGSID" class="floating-card" style="top: 25%; right: 15%;"></div>
+        <div id="card-SOPPENG" class="floating-card" style="top: 50%; right: 20%;"></div>
+        <div id="card-PAJALESANG" class="floating-card" style="top: 75%; right: 25%;"></div>
+
+        <!-- KARTU TOTAL UP3 PAREPARE DI POJOK KANAN BAWAH -->
+        <div id="card-UP3 PAREPARE" class="floating-card" style="top: 1%; right: 1%; width: 250px;"></div>
+
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxdZEW125a3hhphfwqo4g6_EV9IlW3ti9Ne2cI4P0YpJHFNANj2GVb9pYwoXYBKEcM6Jg/exec";
+
+  // Objek penampung cache di sisi browser
+  const memoryCache = {};
+
+  window.onload = function() {
+    loadData();
+  };
+
+  function loadData() {
+    var tahun = document.getElementById('filterTahun').value;
+    var bulan = document.getElementById('filterBulan').value;
+    var kum = document.getElementById('filterKum').value;
+
+    // Buat kunci unik untuk kombinasi filter yang dipilih
+    var cacheKey = `${tahun}_${bulan}_${kum}`;
+
+    // 1. Cek apakah data sudah tersimpan di memori browser
+    if (memoryCache[cacheKey]) {
+      console.log("Memuat data dari Cache Browser (Instan)...");
+      renderFloatingCards(memoryCache[cacheKey]);
+      return; // Hentikan fungsi agar tidak perlu fetch() lagi
+    }
+
+    console.log("Memuat data baru dari Google Sheets...");
+
+    var url = `${WEB_APP_URL}?tahun=${tahun}&bulan=${encodeURIComponent(bulan)}&kum=${encodeURIComponent(kum)}`;
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        // 2. Simpan data yang berhasil ditarik ke dalam memoryCache browser
+        memoryCache[cacheKey] = data;
+        
+        renderFloatingCards(data);
+      })
+      .catch(error => {
+        console.error('Terjadi kesalahan saat mengambil data:', error);
+      });
+  }
+
+  function renderFloatingCards(data) {
+    var unitList = ['RAPPANG', 'MATTIROTASI', 'BARRU', 'TANRU TEDONG', 'PANGSID', 'SOPPENG', 'PAJALESANG', 'UP3 PAREPARE'];
+    
+    unitList.forEach(function(unit) {
+      var container = document.getElementById('card-' + unit);
+      if (container) {
+        container.innerHTML = '';
+      }
+    });
+
+    if (!data || data.length === 0) return;
+
+    var allowedKet = [
+      "A. S1AP SALUR DIST",
+      "B. KWH JUAL TANPA EM1N",
+      "C. SUSUT TANPA EM1N",
+      "D. % TANPA EM1N"
+    ];
+
+    var filteredData = data.filter(function(item) {
+      return allowedKet.includes(item.ket.trim());
+    });
+
+    var groupedByUnit = {};
+    filteredData.forEach(function(item) {
+      if (!groupedByUnit[item.unit]) {
+        groupedByUnit[item.unit] = [];
+      }
+      groupedByUnit[item.unit].push(item);
+    });
+
+    for (var unit in groupedByUnit) {
+      var container = document.getElementById('card-' + unit);
+      if (container) {
+        container.innerHTML = createCardHTML(unit, groupedByUnit[unit]);
+      }
+    }
+  }
+
+  function createCardHTML(unit, rows) {
+    var isTotal = (unit === 'UP3 PAREPARE');
+    var headerClass = isTotal ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-blue-600 text-white font-bold';
+    var containerClass = isTotal ? 'bg-slate-900 text-slate-100 border-2 border-amber-500 shadow-2xl' : 'bg-slate-900 text-slate-100 border border-slate-700 shadow-lg';
+
+    var html = `<div class="${containerClass} rounded overflow-hidden">`;
+    html += `<div class="${headerClass} px-2 py-1 uppercase flex justify-between tracking-wide text-xs"><span>${unit}</span><span>▲</span></div>`;
+    html += `<div class="p-1.5 space-y-0.5">`;
+
+    rows.forEach(function(row) {
+      var formattedNilai = Number(row.nilai).toLocaleString('id-ID');
+      html += `<div class="flex justify-between border-b border-slate-800 pb-0.5 text-[11px]">
+                 <span class="truncate w-32 text-slate-300" title="${row.ket}">${row.ket}</span>
+                 <span class="font-semibold text-white">${formattedNilai}</span>
+               </div>`;
+    });
+
+    html += `</div></div>`;
+    return html;
+  }
+</script>
+</body>
+</html>
