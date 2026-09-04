@@ -30,7 +30,6 @@
 <body class="bg-slate-900 text-slate-100 p-4">
   <div class="max-w-7xl mx-auto">
     
-    <!-- HEADER & FILTER LENGKAP -->
     <header class="flex flex-col md:flex-row justify-between items-center bg-slate-800 border border-slate-700 p-4 rounded-lg shadow-lg mb-4 gap-4">
       <div class="flex items-center space-x-3">
         <div class="flex items-center space-x-2 border-r border-slate-600 pr-4">
@@ -43,7 +42,6 @@
       </div>
 
       <div class="flex flex-wrap gap-3 text-sm items-center">
-        <!-- FILTER KUM (BULANAN / KUMULATIF) -->
         <div>
           <label class="text-xs font-semibold mr-1 text-slate-300">TIPE:</label>
           <select id="filterKum" class="border border-slate-600 p-1 rounded bg-slate-900 text-white text-xs font-medium focus:outline-none focus:border-blue-500" onchange="loadData()">
@@ -52,7 +50,6 @@
           </select>
         </div>
 
-        <!-- FILTER BULAN -->
         <div>
           <label class="text-xs font-semibold mr-1 text-slate-300">BULAN:</label>
           <select id="filterBulan" class="border border-slate-600 p-1 rounded bg-slate-900 text-white text-xs font-medium focus:outline-none focus:border-blue-500" onchange="loadData()">
@@ -71,7 +68,6 @@
           </select>
         </div>
 
-        <!-- FILTER TAHUN -->
         <div>
           <label class="text-xs font-semibold mr-1 text-slate-300">TAHUN:</label>
           <select id="filterTahun" class="border border-slate-600 p-1 rounded bg-slate-900 text-white text-xs font-medium focus:outline-none focus:border-blue-500" onchange="loadData()">
@@ -82,14 +78,11 @@
       </div>
     </header>
 
-    <!-- KANVAS PETA & KARTU MELAYANG -->
-    <div class="bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-6 relative">
+    <div class="bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-6 relative mb-4">
       <div class="map-wrapper">
         
-        <!-- GAMBAR PETA UTAMA -->
         <img src="https://lh3.googleusercontent.com/d/1YVLUXNZQxOTjLpkGCNrCaDgGaf9kl_v7" alt="Peta UP3 Parepare">
 
-        <!-- POSISI KARTU STATISTIK -->
         <div id="card-RAPPANG" class="floating-card" style="top: 10%; left: 5%;"></div>
         <div id="card-MATTIROTASI" class="floating-card" style="top: 40%; left: 1%;"></div>
         <div id="card-BARRU" class="floating-card" style="top: 70%; left: 3%;"></div>
@@ -99,10 +92,17 @@
         <div id="card-SOPPENG" class="floating-card" style="top: 50%; right: 20%;"></div>
         <div id="card-PAJALESANG" class="floating-card" style="top: 75%; right: 25%;"></div>
 
-        <!-- KARTU TOTAL UP3 PAREPARE DI POJOK KANAN BAWAH -->
         <div id="card-UP3 PAREPARE" class="floating-card" style="top: 1%; right: 1%; width: 250px;"></div>
 
       </div>
+    </div>
+
+    <div class="bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-4">
+      <h2 class="text-sm font-bold text-white mb-3 tracking-wide uppercase border-b border-slate-700 pb-2">
+        Rekapitulasi Susut Tanpa Emin per Unit
+      </h2>
+      <div id="summary-persen-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
+        </div>
     </div>
 
   </div>
@@ -128,7 +128,7 @@
     // 1. Cek apakah data sudah tersimpan di memori browser
     if (memoryCache[cacheKey]) {
       console.log("Memuat data dari Cache Browser (Instan)...");
-      renderFloatingCards(memoryCache[cacheKey]);
+      renderAll(memoryCache[cacheKey]);
       return; // Hentikan fungsi agar tidak perlu fetch() lagi
     }
 
@@ -142,11 +142,16 @@
         // 2. Simpan data yang berhasil ditarik ke dalam memoryCache browser
         memoryCache[cacheKey] = data;
         
-        renderFloatingCards(data);
+        renderAll(data);
       })
       .catch(error => {
         console.error('Terjadi kesalahan saat mengambil data:', error);
       });
+  }
+
+  function renderAll(data) {
+    renderFloatingCards(data);
+    renderSummaryPersen(data);
   }
 
   function renderFloatingCards(data) {
@@ -207,6 +212,63 @@
 
     html += `</div></div>`;
     return html;
+  }
+
+  // Fungsi untuk mendapatkan warna berdasarkan conditional formatting nilai % TANPA EM1N
+  function getConditionalColor(val) {
+    var num = parseFloat(val);
+    if (isNaN(num)) return 'bg-slate-700 text-white';
+
+    // Logika dari nilai terbesar ke terkecil agar batas terpenuhi dengan benar
+    if (num >= 13) {
+      return 'bg-black text-white border border-slate-600'; // Hitam
+    } else if (num >= 10) {
+      return 'bg-red-600 text-white'; // Merah
+    } else if (num >= 7) {
+      return 'bg-emerald-600 text-white'; // Hijau
+    } else if (num >= 5) {
+      return 'bg-amber-500 text-slate-950 font-bold'; // Gold / Kuning Emas
+    } else if (num >= 0) {
+      return 'bg-slate-200 text-slate-950 font-semibold'; // Platinum / Abu-abu Terang
+    } else {
+      return 'bg-slate-700 text-white'; // Default jika di bawah 0
+    }
+  }
+
+  // Fungsi untuk merender container rekapitulasi persentase di bagian bawah
+  function renderSummaryPersen(data) {
+    var summaryContainer = document.getElementById('summary-persen-container');
+    summaryContainer.innerHTML = '';
+
+    if (!data || data.length === 0) {
+      summaryContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-full">Tidak ada data.</p>';
+      return;
+    }
+
+    // Filter khusus baris "D. % TANPA EM1N"
+    var persenData = data.filter(function(item) {
+      return item.ket.trim() === "D. % TANPA EM1N";
+    });
+
+    if (persenData.length === 0) {
+      summaryContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-full">Data persentase tidak ditemukan.</p>';
+      return;
+    }
+
+    persenData.forEach(function(row) {
+      var colorClass = getConditionalColor(row.nilai);
+      var formattedNilai = Number(row.nilai).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      var cardHtml = `
+        <div class="bg-slate-900 border border-slate-700 rounded-lg p-2.5 flex flex-col justify-between shadow">
+          <span class="text-[11px] font-bold text-slate-300 truncate uppercase mb-2" title="${row.unit}">${row.unit}</span>
+          <div class="${colorClass} rounded p-2 text-center text-sm transition-colors duration-200">
+            ${formattedNilai}%
+          </div>
+        </div>
+      `;
+      summaryContainer.innerHTML += cardHtml;
+    });
   }
 </script>
 </body>
