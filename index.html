@@ -140,7 +140,47 @@
   // Objek penampung cache di sisi browser
   const memoryCache = {};
 
-  window.onload = function() {
+window.onload = function() {
+    // Mendapatkan tanggal saat ini di dunia nyata
+    var currentDate = new Date();
+    var currentMonth = currentDate.getMonth(); // 0 (Jan) sampai 11 (Des)
+    var currentYear = currentDate.getFullYear();
+
+    // Logika N-1 Bulan (Bulan sebelumnya)
+    var targetMonthIndex, targetYear;
+    
+    if (currentMonth === 0) {
+      // Jika sekarang bulan Januari (0), maka N-1 adalah Desember (11) tahun lalu
+      targetMonthIndex = 11;
+      targetYear = currentYear - 1;
+    } else {
+      // Selain itu, cukup kurangi bulan saat ini dengan 1
+      targetMonthIndex = currentMonth - 1;
+      targetYear = currentYear;
+    }
+
+    // Daftar nilai value bulan yang ada di <select id="filterBulan">
+    var monthValues = [
+      "01 JANUARI", "02 FEBRUARI", "03 MARET", "04 APRIL", 
+      "05 MEI", "06 JUNI", "07 JULI", "08 AGUSTUS", 
+      "09 SEPTEMBER", "10 OKTOBER", "11 NOVEMBER", "12 DESEMBER"
+    ];
+
+    var selectedMonthString = monthValues[targetMonthIndex];
+
+    // Set nilai dropdown bulan secara otomatis
+    var selectBulan = document.getElementById('filterBulan');
+    if (selectBulan) {
+      selectBulan.value = selectedMonthString;
+    }
+
+    // Set nilai dropdown tahun secara otomatis (jika ada di pilihan)
+    var selectTahun = document.getElementById('filterTahun');
+    if (selectTahun) {
+      selectTahun.value = targetYear.toString();
+    }
+
+    // Panggil fungsi load data dengan filter yang sudah otomatis terpilih
     loadData();
   };
 
