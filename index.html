@@ -30,6 +30,7 @@
 <body class="bg-slate-900 text-slate-100 p-4">
   <div class="max-w-7xl mx-auto">
     
+    <!-- HEADER & FILTER LENGKAP -->
     <header class="flex flex-col md:flex-row justify-between items-center bg-slate-800 border border-slate-700 p-4 rounded-lg shadow-lg mb-4 gap-4">
       <div class="flex items-center space-x-3">
         <div class="flex items-center space-x-2 border-r border-slate-600 pr-4">
@@ -42,14 +43,16 @@
       </div>
 
       <div class="flex flex-wrap gap-3 text-sm items-center">
+        <!-- FILTER KUM (BULANAN / KUMULATIF) -->
         <div>
           <label class="text-xs font-semibold mr-1 text-slate-300">TIPE:</label>
           <select id="filterKum" class="border border-slate-600 p-1 rounded bg-slate-900 text-white text-xs font-medium focus:outline-none focus:border-blue-500" onchange="loadData()">
             <option value="BULANAN">BULANAN</option>
-            <option value="KUMULATIF">KUMULATIF</option>
+            <option value="KUMULATIF" selected>KUMULATIF</option>
           </select>
         </div>
 
+        <!-- FILTER BULAN -->
         <div>
           <label class="text-xs font-semibold mr-1 text-slate-300">BULAN:</label>
           <select id="filterBulan" class="border border-slate-600 p-1 rounded bg-slate-900 text-white text-xs font-medium focus:outline-none focus:border-blue-500" onchange="loadData()">
@@ -68,6 +71,7 @@
           </select>
         </div>
 
+        <!-- FILTER TAHUN -->
         <div>
           <label class="text-xs font-semibold mr-1 text-slate-300">TAHUN:</label>
           <select id="filterTahun" class="border border-slate-600 p-1 rounded bg-slate-900 text-white text-xs font-medium focus:outline-none focus:border-blue-500" onchange="loadData()">
@@ -78,11 +82,14 @@
       </div>
     </header>
 
+    <!-- KANVAS PETA & KARTU MELAYANG -->
     <div class="bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-6 relative mb-4">
       <div class="map-wrapper">
         
+        <!-- GAMBAR PETA UTAMA -->
         <img src="https://lh3.googleusercontent.com/d/1YVLUXNZQxOTjLpkGCNrCaDgGaf9kl_v7" alt="Peta UP3 Parepare">
 
+        <!-- POSISI KARTU STATISTIK -->
         <div id="card-RAPPANG" class="floating-card" style="top: 10%; left: 5%;"></div>
         <div id="card-MATTIROTASI" class="floating-card" style="top: 40%; left: 1%;"></div>
         <div id="card-BARRU" class="floating-card" style="top: 70%; left: 3%;"></div>
@@ -92,23 +99,26 @@
         <div id="card-SOPPENG" class="floating-card" style="top: 50%; right: 20%;"></div>
         <div id="card-PAJALESANG" class="floating-card" style="top: 75%; right: 25%;"></div>
 
+        <!-- KARTU TOTAL UP3 PAREPARE DI POJOK KANAN BAWAH -->
         <div id="card-UP3 PAREPARE" class="floating-card" style="top: 1%; right: 1%; width: 250px;"></div>
 
       </div>
     </div>
 
+    <!-- CONTAINER BARU: RINGKASAN % TANPA EM1N, TARGET & PENCAPAIAN -->
     <div class="bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-4">
       <h2 class="text-sm font-bold text-white mb-3 tracking-wide uppercase border-b border-slate-700 pb-2">
-        Rekapitulasi Susut Tanpa Emin per Unit
+        Rekapitulasi Susut, Target & Pencapaian
       </h2>
-      <div id="summary-persen-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
-        </div>
+      <div id="summary-persen-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+        <!-- Akan diisi secara dinamis oleh JavaScript -->
+      </div>
     </div>
 
   </div>
 
 <script>
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxdZEW125a3hhphfwqo4g6_EV9IlW3ti9Ne2cI4P0YpJHFNANj2GVb9pYwoXYBKEcM6Jg/exec";
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyg76R1_mguiVA59M5ZZBh19RJuxkrAUZAoBh5pw37bzlLj4GgZV9xN8_0ccRRLsOc8Yg/exec";
 
   // Objek penampung cache di sisi browser
   const memoryCache = {};
@@ -122,14 +132,12 @@
     var bulan = document.getElementById('filterBulan').value;
     var kum = document.getElementById('filterKum').value;
 
-    // Buat kunci unik untuk kombinasi filter yang dipilih
     var cacheKey = `${tahun}_${bulan}_${kum}`;
 
-    // 1. Cek apakah data sudah tersimpan di memori browser
     if (memoryCache[cacheKey]) {
       console.log("Memuat data dari Cache Browser (Instan)...");
       renderAll(memoryCache[cacheKey]);
-      return; // Hentikan fungsi agar tidak perlu fetch() lagi
+      return;
     }
 
     console.log("Memuat data baru dari Google Sheets...");
@@ -139,9 +147,7 @@
     fetch(url)
       .then(response => response.json())
       .then(data => {
-        // 2. Simpan data yang berhasil ditarik ke dalam memoryCache browser
         memoryCache[cacheKey] = data;
-        
         renderAll(data);
       })
       .catch(error => {
@@ -219,7 +225,6 @@
     var num = parseFloat(val);
     if (isNaN(num)) return 'bg-slate-700 text-white';
 
-    // Logika dari nilai terbesar ke terkecil agar batas terpenuhi dengan benar
     if (num >= 13) {
       return 'bg-black text-white border border-slate-600'; // Hitam
     } else if (num >= 10) {
@@ -227,15 +232,15 @@
     } else if (num >= 7) {
       return 'bg-emerald-600 text-white'; // Hijau
     } else if (num >= 5) {
-      return 'bg-amber-500 text-slate-950 font-bold'; // Gold / Kuning Emas
+      return 'bg-amber-500 text-slate-950 font-bold'; // Gold
     } else if (num >= 0) {
-      return 'bg-slate-200 text-slate-950 font-semibold'; // Platinum / Abu-abu Terang
+      return 'bg-slate-200 text-slate-950 font-semibold'; // Platinum
     } else {
-      return 'bg-slate-700 text-white'; // Default jika di bawah 0
+      return 'bg-slate-700 text-white';
     }
   }
 
-  // Fungsi untuk merender container rekapitulasi persentase di bagian bawah
+  // Fungsi untuk merender container rekapitulasi persentase, target, dan pencapaian
   function renderSummaryPersen(data) {
     var summaryContainer = document.getElementById('summary-persen-container');
     summaryContainer.innerHTML = '';
@@ -256,14 +261,45 @@
     }
 
     persenData.forEach(function(row) {
-      var colorClass = getConditionalColor(row.nilai);
-      var formattedNilai = Number(row.nilai).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var aktual = parseFloat(row.nilai) || 0;
+      var target = parseFloat(row.target) || 0;
+      
+      // Perhitungan Persen Pencapaian dengan Polaritas Negatif:
+      // Rumus Polaritas Negatif: (Target / Aktual) * 100%
+      // Jika aktual lebih kecil dari target, pencapaian > 100% (bagus).
+      // Jika aktual lebih besar dari target, pencapaian < 100% (kurang).
+      var persenPencapaian = 0;
+      if (aktual > 0) {
+        persenPencapaian = (target / aktual) * 100;
+      } else if (target === 0) {
+        persenPencapaian = 100;
+      }
+
+      var colorClass = getConditionalColor(aktual);
+      var formattedAktual = aktual.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var formattedTarget = target.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var formattedPencapaian = persenPencapaian.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
       var cardHtml = `
         <div class="bg-slate-900 border border-slate-700 rounded-lg p-2.5 flex flex-col justify-between shadow">
-          <span class="text-[11px] font-bold text-slate-300 truncate uppercase mb-2" title="${row.unit}">${row.unit}</span>
-          <div class="${colorClass} rounded p-2 text-center text-sm transition-colors duration-200">
-            ${formattedNilai}%
+          <span class="text-[11px] font-bold text-slate-300 truncate uppercase mb-2 border-b border-slate-800 pb-1">${row.unit}</span>
+          
+          <div class="space-y-1.5 my-1 text-[11px]">
+            <div class="flex justify-between text-slate-400">
+              <span>Target:</span>
+              <span class="font-medium text-white">${formattedTarget}</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>Pencapaian:</span>
+              <span class="font-semibold text-blue-400">${formattedPencapaian}%</span>
+            </div>
+          </div>
+
+          <div class="mt-1">
+            <span class="text-[10px] text-slate-400 block mb-0.5">Nilai Susut:</span>
+            <div class="${colorClass} rounded p-1.5 text-center text-xs font-bold transition-colors duration-200">
+              ${formattedAktual}
+            </div>
           </div>
         </div>
       `;
